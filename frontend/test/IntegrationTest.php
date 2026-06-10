@@ -4,6 +4,22 @@ use PHPUnit\Framework\TestCase;
 class IntegrationTest extends TestCase {
 
     private $backendUrl = 'http://localhost:8080/api/order';
+    private $seedFile;
+    private $testFile;
+
+    protected function setUp(): void {
+        // CT Stage: Tentukan path file seed dan test
+        $this->seedFile = __DIR__ . '/../../data/orders.seed.json';
+        $this->testFile = __DIR__ . '/../../data/orders.json';
+
+        // Salin seed data bersih sebelum tiap tes dimulai
+        copy($this->seedFile, $this->testFile);
+    }
+
+    protected function tearDown(): void {
+        // CT Stage: Kembalikan orders.json ke kondisi bersih setelah tiap tes
+        file_put_contents($this->testFile, '[]');
+    }
 
     public function testPhpToJavaCommunicationReturnsValidContract() {
         $payloadData = [
@@ -58,9 +74,6 @@ class IntegrationTest extends TestCase {
         $this->assertEquals(405, $httpCode);
     }
 
-    /**
-     * Integrasi: Menguji pesanan Hoodie dengan diskon grosir
-     */
     public function testOrderHoodieWithDiscount() {
         $payloadData = [
             "type" => "hoodie",
@@ -87,13 +100,9 @@ class IntegrationTest extends TestCase {
         $this->assertEquals(200, $httpCode);
         $decodedResponse = json_decode($response, true);
         $this->assertEquals('success', $decodedResponse['status']);
-        // Hoodie qty>20 diskon 15%: 150000*0.85*21 = 2677500
         $this->assertEquals(2677500, $decodedResponse['totalPrice']);
     }
 
-    /**
-     * Integrasi: Menguji pesanan dengan complexity 3 dan qty >= 10
-     */
     public function testOrderTShirtCustomComplexity3() {
         $payloadData = [
             "type" => "tshirt",
@@ -120,37 +129,35 @@ class IntegrationTest extends TestCase {
         $this->assertEquals(200, $httpCode);
         $decodedResponse = json_decode($response, true);
         $this->assertEquals('success', $decodedResponse['status']);
-        // T-Shirt + custom complexity 3 qty>=10: (50000+35000)*10 = 850000
         $this->assertEquals(850000, $decodedResponse['totalPrice']);
     }
 
     public function testOrderWithZeroQtyReturnsZeroTotal() {
-    $payloadData = [
-        "type" => "tshirt",
-        "qty" => 0,
-        "isCustom" => false,
-        "complexity" => 1,
-        "notes" => "Test qty nol"
-    ];
-    $jsonPayload = json_encode($payloadData);
+        $payloadData = [
+            "type" => "tshirt",
+            "qty" => 0,
+            "isCustom" => false,
+            "complexity" => 1,
+            "notes" => "Test qty nol"
+        ];
+        $jsonPayload = json_encode($payloadData);
 
-    $ch = curl_init($this->backendUrl);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonPayload);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'Content-Length: ' . strlen($jsonPayload)
-    ]);
+        $ch = curl_init($this->backendUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonPayload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($jsonPayload)
+        ]);
 
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
 
-    $this->assertEquals(200, $httpCode);
-    $decodedResponse = json_decode($response, true);
-    $this->assertEquals('success', $decodedResponse['status']);
-    // qty <= 0 maka total = 0
-    $this->assertEquals(0, $decodedResponse['totalPrice']);
-}
+        $this->assertEquals(200, $httpCode);
+        $decodedResponse = json_decode($response, true);
+        $this->assertEquals('success', $decodedResponse['status']);
+        $this->assertEquals(0, $decodedResponse['totalPrice']);
+    }
 }

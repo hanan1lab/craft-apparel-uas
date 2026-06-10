@@ -1,0 +1,83 @@
+name: CraftApparel CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout kode
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: curl
+          coverage: xdebug
+
+      - name: Install dependencies PHP
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Set permission PHPUnit
+        run: chmod +x vendor/bin/phpunit
+
+      - name: Kompilasi Backend Java
+        run: |
+          javac -cp ".:junit-platform-console-standalone.jar" backend/*.java backend/test/*.java
+
+      - name: Jalankan Backend Java di background
+        run: java backend.Main &
+
+      - name: Jalankan PHP Server di background
+        run: php -S localhost:8000 -t frontend &
+
+      - name: Tunggu server siap
+        run: sleep 3
+
+      - name: Jalankan Unit Test Java (JUnit)
+        run: |
+          java -jar junit-platform-console-standalone.jar \
+            execute \
+            --class-path . \
+            --select-class backend.test.OrderHandlerTest
+
+      - name: Jalankan Unit & Integration Test PHP
+        run: |
+          ./vendor/bin/phpunit \
+            --coverage-text \
+            frontend/test/processTest.php \
+            frontend/test/IntegrationTest.php
+
+      - name: Setup Chrome untuk System Test
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Jalankan ChromeDriver di background
+        run: chromedriver --port=4444 &
+
+      - name: Tunggu ChromeDriver siap
+        run: sleep 5
+
+      - name: Jalankan System Test (Selenium)
+        run: |
+          ./vendor/bin/phpunit \
+            frontend/test/SystemTest.php
+
+      - name: Cek Code Coverage minimal 75%
+        run: |
+          ./vendor/bin/phpunit \
+            --coverage-text \
+            frontend/test/processTest.php \
+            frontend/test/IntegrationTest.php \
+            frontend/test/SystemTest.php
