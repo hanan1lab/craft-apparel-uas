@@ -1,0 +1,14 @@
+[
+  {
+    "id": "P_TSHIRT",
+    "type": "tshirt",
+    "base_price": 50000,
+    "stock_limit": 100
+  },
+  {
+    "id": "P_HOODIE",
+    "type": "hoodie",
+    "base_price": 150000,
+    "stock_limit": 50
+  }
+]

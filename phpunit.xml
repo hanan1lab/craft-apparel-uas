@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php">
+    <testsuites>
+        <testsuite name="all">
+            <file>frontend/test/processTest.php</file>
+            <file>frontend/test/IntegrationTest.php</file>
+            <file>frontend/test/SystemTest.php</file>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>frontend</directory>
+        </include>
+        <exclude>
+            <directory>vendor</directory>
+        </exclude>
+    </source>
+    <php>
+        <ini name="error_reporting" value="E_ALL &amp; ~E_DEPRECATED"/>
+    </php>
+</phpunit>
