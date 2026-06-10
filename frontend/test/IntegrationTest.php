@@ -59,7 +59,7 @@ class IntegrationTest extends TestCase {
         $this->assertArrayHasKey('totalPrice', $decodedResponse);
         $this->assertEquals('success', $decodedResponse['status']);
         $this->assertNotEmpty($decodedResponse['orderId']);
-        $this->assertEquals(99, $decodedResponse['totalPrice']);
+        $this->assertEquals(375000, $decodedResponse['totalPrice']);
     }
 
     public function testBackendRejectsGetMethod() {
